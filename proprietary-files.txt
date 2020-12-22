@@ -45,8 +45,14 @@ product/lib64/lib-imsvtutils.so
 product/lib64/vendor.qti.imsrtpservice@2.0.so
 product/lib64/vendor.qti.imsrtpservice@2.1.so
 
+# HWC - from LA.UM.8.9.r1-08300-SM6xx.0
+vendor/lib/hw/hwcomposer.sm6150.so:product/vendor_overlay/29/lib/hw/hwcomposer.sm6150.so|e05bd72f82512fbc28d13d5c2b1aff39d9cb7700
+vendor/lib/libsdmcore.so:product/vendor_overlay/29/lib/libsdmcore.so|c3b4571312d10411836b8c7cc2175c4b8aa41c37
+vendor/lib64/hw/hwcomposer.sm6150.so:product/vendor_overlay/29/lib64/hw/hwcomposer.sm6150.so|bbcf5542dd079391cb98a6b1d8c4537d973e5d56
+vendor/lib64/libsdmcore.so:product/vendor_overlay/29/lib64/libsdmcore.so|fd6cf7a237135c19d3023c1da7aeca46a89de6ac
+
 # Soundfx - from LA.UM.8.9.r1-08300-SM6xx.0
-vendor/lib/soundfx/libvolumelistener.so:product/vendor_overlay/29/lib/soundfx/libvolumelistener.so:|672ad577dab5221bdd7f840d87313e3483aebde0
+vendor/lib/soundfx/libvolumelistener.so:product/vendor_overlay/29/lib/soundfx/libvolumelistener.so|672ad577dab5221bdd7f840d87313e3483aebde0
 vendor/lib64/soundfx/libvolumelistener.so:product/vendor_overlay/29/lib64/soundfx/libvolumelistener.so|c25cc5e8c3622eb97d3bb4814aeb301c01d8b046
 
 # Telephony
