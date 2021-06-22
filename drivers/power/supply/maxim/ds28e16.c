@@ -32,18 +32,10 @@
 #include <linux/regmap.h>
 #include <linux/random.h>
 
-#ifdef CONFIG_TARGET_PROJECT_J20C
 #define ds_info	pr_err
 #define ds_dbg	pr_err
 #define ds_err	pr_err
 #define ds_log	pr_err
-#else
-#define ds_info	pr_debug
-#define ds_dbg	pr_debug
-#define ds_err	pr_err
-#define ds_log	pr_debug
-#endif
-
 
 struct ds28e16_data {
 	struct platform_device *pdev;
@@ -1521,12 +1513,10 @@ struct device_attribute *attr, char *buf)
 		}
 		Delay_us(1000);
 	}
-#ifdef CONFIG_TARGET_PROJECT_J20C
 	/*ds_dbg("RomID = %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x\n",
 	RomID[0], RomID[1], RomID[2], RomID[3],
 	RomID[4], RomID[5], RomID[6], RomID[7]);
 	*/
-#endif
 	ds_log("test done\nsuccess time : %d\n", count);
 	return scnprintf(buf, PAGE_SIZE,
 	"Success = %d\nRomID = %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x\n",

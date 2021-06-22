@@ -22,15 +22,9 @@
 #include <linux/device.h>
 #include <linux/spinlock.h>
 
-#ifdef CONFIG_TARGET_PROJECT_J20C
 #define ow_info	pr_err
 #define ow_dbg	pr_err
 #define ow_err	pr_err
-#else
-#define ow_info	pr_info
-#define ow_dbg	pr_debug
-#define ow_err	pr_debug
-#endif
 #define ow_log	pr_err
 
 #define DRV_STRENGTH_16MA		(0x7 << 6)
@@ -119,39 +113,22 @@ unsigned char read_bit(void)
 
 	ONE_WIRE_CONFIG_OUT;
 	ONE_WIRE_OUT_LOW;
-#ifdef CONFIG_TARGET_PROJECT_J20C
 	//Delay_us(1);////
 	//Delay_ns(400);
-#else
-	Delay_us(1);
-#endif
 	ONE_WIRE_CONFIG_IN;
-#ifdef CONFIG_TARGET_PROJECT_J20C
 	//Delay_ns(500);//
-#else
-	Delay_ns(500);
-#endif
 	vamm = readl_relaxed(g_onewire_data->gpio_in_out_reg); // Read
-#ifdef CONFIG_TARGET_PROJECT_J20C
 	Delay_us(15);
 	//ONE_WIRE_OUT_HIGH;
 	//ONE_WIRE_CONFIG_OUT;
         //ONE_WIRE_OUT_HIGH;
 	//Delay_us(6);
-#else
-	Delay_us(5);
-	ONE_WIRE_OUT_HIGH;
-	ONE_WIRE_CONFIG_OUT;
-	Delay_us(6);
-#endif
 	return((unsigned char)vamm & 0x01);
 }
 
 void write_bit(char bitval)
 {
-#ifdef CONFIG_TARGET_PROJECT_J20C
 	ONE_WIRE_CONFIG_OUT;
-#endif
 	ONE_WIRE_OUT_LOW;
 	Delay_us(1);//
 	if (bitval != 0)
