@@ -971,7 +971,7 @@ update_time:
 	  pr_err("lct Failed to get batt-type rc=%d\n", rc);
           return rc;
 	}
-	if (strcmp(pval.strval,"m305-sunwoda-5000mah") == 0){
+	if (strcmp(pval.strval,"m703-pm7150b-atl-5160mah") == 0){
           if (ffc_chg_term_no_work && (batt_soc == 100)) {
                   ffc_chg_term_no_work = false;
                   schedule_delayed_work(&chip->ffc_chg_term_current_work,

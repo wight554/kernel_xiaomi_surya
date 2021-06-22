@@ -66,7 +66,7 @@ static int qg_determine_pon_soc(struct qpnp_qg *chip);
 static int qg_sanitize_sdam(struct qpnp_qg *chip);
 static int qg_setup_battery(struct qpnp_qg *chip);
 static int qg_post_init(struct qpnp_qg *chip);
-bool profile_nvt_5000mah_judge =false;
+bool profile_6000mah_judge =false;
 
 static bool is_battery_present(struct qpnp_qg *chip)
 {
@@ -2159,13 +2159,12 @@ static int qg_setprop_batt_age_level(struct qpnp_qg *chip, int batt_age_level)
 	return rc;
 }
 
-#define NVT_5000MAH_FFC_BATT_FULL_CURRENT       775000
-#define NVT_5000MAH_FFC_CHG_TERM_CURRENT        -540
-
-#define LOW_TEMP_FFC_BATT_FULL_CURRENT          830000
-#define HIGH_TEMP_FFC_BATT_FULL_CURRENT         830000
-#define LOW_TEMP_FFC_CHG_TERM_CURRENT           -540
-#define HIGH_TEMP_FFC_CHG_TERM_CURRENT          -590
+#define LOW_TEMP_FFC_BATT_FULL_CURRENT		1160000
+#define HIGH_TEMP_FFC_BATT_FULL_CURRENT		1160000
+#define BATT6000MAH_FFC_BATT_FULL_CURRENT		820000
+#define LOW_TEMP_FFC_CHG_TERM_CURRENT		-710
+#define HIGH_TEMP_FFC_CHG_TERM_CURRENT		-760
+#define BATT6000MAH_FFC_CHG_TERM_CURRENT		-530
 
 static int qg_get_ffc_iterm_for_qg(struct qpnp_qg *chip)
 {
@@ -2179,8 +2178,8 @@ static int qg_get_ffc_iterm_for_qg(struct qpnp_qg *chip)
                        pr_err("get charge_term_current fail!\n");
                        return LOW_TEMP_FFC_BATT_FULL_CURRENT;
                }
-               if ((prop.intval == NVT_5000MAH_FFC_CHG_TERM_CURRENT) && profile_nvt_5000mah_judge) {
-                       ffc_qg_iterm = NVT_5000MAH_FFC_BATT_FULL_CURRENT;
+               if (prop.intval == BATT6000MAH_FFC_CHG_TERM_CURRENT) {
+                       ffc_qg_iterm = BATT6000MAH_FFC_BATT_FULL_CURRENT;
                } else if (prop.intval == LOW_TEMP_FFC_CHG_TERM_CURRENT) {
                        ffc_qg_iterm = LOW_TEMP_FFC_BATT_FULL_CURRENT;
                } else if (prop.intval == HIGH_TEMP_FFC_CHG_TERM_CURRENT) {
@@ -2208,8 +2207,8 @@ static int qg_get_ffc_iterm_for_chg(struct qpnp_qg *chip)
                pr_err("Failed to get battery-temp, rc = %d\n", rc);
                return rc;
        }
-       if(profile_nvt_5000mah_judge)
-	       ffc_chg_iterm = NVT_5000MAH_FFC_CHG_TERM_CURRENT;
+       if(profile_6000mah_judge)
+	       ffc_chg_iterm = BATT6000MAH_FFC_CHG_TERM_CURRENT;
        else if (batt_temp < 350)
                ffc_chg_iterm = LOW_TEMP_FFC_CHG_TERM_CURRENT;
        else
@@ -3456,38 +3455,30 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 			if (rc < 0) {
 				pr_err("qg_load_battery_profile : get page0 error.\n");
 			} else {
-				if ((pval.arrayval[0] == 'S') ||  (pval.arrayval[0] == 'X')) {
-					if ((pval.arrayval[3] == '5') && (pval.arrayval[4] == '9')) {
+				if ((pval.arrayval[0] == 'A') ||  (pval.arrayval[0] == 'N') ){
+					if ((pval.arrayval[3] == '5') && (pval.arrayval[4] == '7') ) {
 						profile_node = of_batterydata_get_best_profile(chip->batt_node,
-							chip->batt_id_ohm / 1000, "m305-sunwoda-5000mah");
+							chip->batt_id_ohm / 1000, "m703-pm7150b-atl-5160mah");
 						chip->profile_judge_done = true;
-						profile_nvt_5000mah_judge = false;
-					} else {
+						profile_6000mah_judge = false;
+				       }else if ((pval.arrayval[3] == '6') && (pval.arrayval[4] == '1') ) {
 						profile_node = of_batterydata_get_best_profile(chip->batt_node,
-							chip->batt_id_ohm / 1000, "m305-sunwoda-5000mah");
-						profile_nvt_5000mah_judge = false;
-						pr_err("lct profile_nvt_5000mah_judge=%d,chip->profile_judge_done=%d,pval.arrayval[0]=%c,pval.arrayval[3]=%c,pval.arrayval[4]=%c\n",
-				                        profile_nvt_5000mah_judge,chip->profile_judge_done,pval.arrayval[0],pval.arrayval[3],pval.arrayval[4]);
-					}
-				} else if ((pval.arrayval[0] == 'A') ||  (pval.arrayval[0] == 'N')) {
-					if ((pval.arrayval[3] == '5') && (pval.arrayval[4] == '9')) {
-                                                 profile_node = of_batterydata_get_best_profile(chip->batt_node,
-                                                         chip->batt_id_ohm / 1000, "m305-nvt-5000mah");
-                                                 chip->profile_judge_done = true;
-                                                 profile_nvt_5000mah_judge = true;
-					} else {
+							chip->batt_id_ohm / 1000, "m703-atl-6000mah");
+						chip->profile_judge_done = true;
+						profile_6000mah_judge = true;
+				        }else{
 						profile_node = of_batterydata_get_best_profile(chip->batt_node,
-							chip->batt_id_ohm / 1000, "m305-sunwoda-5000mah");
-						profile_nvt_5000mah_judge = false;
-						pr_err("lct profile_nvt_5000mah_judge=%d,chip->profile_judge_done=%d,pval.arrayval[0]=%c,pval.arrayval[3]=%c,pval.arrayval[4]=%c\n",
-				                        profile_nvt_5000mah_judge,chip->profile_judge_done,pval.arrayval[0],pval.arrayval[3],pval.arrayval[4]);
-					}
-				} else {
+							chip->batt_id_ohm / 1000, "m703-pm7150b-atl-5160mah");
+						profile_6000mah_judge = false;
+						pr_err("lct profile_6000mah_judge=%d,chip->profile_judge_done=%d,pval.arrayval[0]=%c,pval.arrayval[3]=%c,pval.arrayval[4]=%c\n",
+				                        profile_6000mah_judge,chip->profile_judge_done,pval.arrayval[0],pval.arrayval[3],pval.arrayval[4]);
+				       }
+				}else{
 					profile_node = of_batterydata_get_best_profile(chip->batt_node,
-							chip->batt_id_ohm / 1000, "m305-sunwoda-5000mah");
-					profile_nvt_5000mah_judge = false;
-					pr_err("lct1 profile_nvt_5000mah_judge=%d,chip->profile_judge_done=%d,pval.arrayval[0]=%c,pval.arrayval[3]=%c,pval.arrayval[4]=%c\n",
-	                                          profile_nvt_5000mah_judge,chip->profile_judge_done,pval.arrayval[0],pval.arrayval[3],pval.arrayval[4]);
+							chip->batt_id_ohm / 1000, "m703-pm7150b-atl-5160mah");
+					profile_6000mah_judge = false;
+					pr_err("lct profile_6000mah_judge=%d,chip->profile_judge_done=%d,pval.arrayval[0]=%c,pval.arrayval[3]=%c,pval.arrayval[4]=%c\n",
+	                                          profile_6000mah_judge,chip->profile_judge_done,pval.arrayval[0],pval.arrayval[3],pval.arrayval[4]);
 				}
 
 			}
@@ -3496,7 +3487,7 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 		if (chip->profile_judge_done == false) {
 			if (chip->profile_loaded == false) {
 				profile_node = of_batterydata_get_best_profile(chip->batt_node,
-						chip->batt_id_ohm / 1000, "m305-sunwoda-5000mah");
+						chip->batt_id_ohm / 1000, "m703-pm7150b-atl-5160mah");
 			} else {
 				return 0;
 			}

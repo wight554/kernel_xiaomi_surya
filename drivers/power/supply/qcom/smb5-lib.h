@@ -130,7 +130,7 @@ enum print_reason {
 
 /* lct thermal */
 #define LCT_THERM_CALL_LEVEL		14
-#define LCT_THERM_LCDOFF_LEVEL		13
+#define LCT_THERM_LCDOFF_LEVEL		11
 
 #ifdef CONFIG_BATT_VERIFY_BY_DS28E16
 	#define CHARGER_SOC_DECIMAL_MS		200
