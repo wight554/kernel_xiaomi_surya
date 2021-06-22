@@ -9,7 +9,6 @@
  * GNU General Public License for more details.
  *
  * Copyright (C) 2012 ARM Limited
- * Copyright (C) 2021 XiaoMi, Inc.
  */
 
 #include <linux/delay.h>
@@ -151,7 +150,6 @@ static struct platform_driver vexpress_reset_driver = {
 	.driver = {
 		.name = "vexpress-reset",
 		.of_match_table = vexpress_reset_of_match,
-		.suppress_bind_attrs = true,
 	},
 };
 
