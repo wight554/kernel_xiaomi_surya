@@ -208,6 +208,7 @@ struct usbpd_pm {
 	int			bus_volt_max;
 	int			bus_curr_max;
 	int			bus_curr_compensate;
+	int         batt_temp;
 	bool		cp_sec_enable;
 	/* jeita or thermal related */
 	bool			jeita_triggered;

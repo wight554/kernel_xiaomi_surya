@@ -1,4 +1,5 @@
 /* Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -767,7 +768,7 @@ static int handle_jeita(struct step_chg_info *chip)
 	u64 elapsed_us;
 	int temp, pd_authen_result = 0, usb_charger_type = 0, hvdcp3_charger_type = 0;
 	static bool fast_mode_dis;
-	int chg_term_current = 0, batt_soc = 0, batt_temp = 0;
+	int batt_soc = 0, batt_temp = 0;
 
 	rc = power_supply_get_property(chip->batt_psy,
 		POWER_SUPPLY_PROP_SW_JEITA_ENABLED, &pval);
@@ -840,7 +841,7 @@ static int handle_jeita(struct step_chg_info *chip)
 		return rc;
 	}
 	batt_soc = pval.intval;
-	rc = power_supply_get_property(chip->bms_psy,
+	/*rc = power_supply_get_property(chip->bms_psy,
 			POWER_SUPPLY_PROP_FASTCHARGE_MODE, &pval);
 	pr_err("%s:fastcharge_mode=%d\n", __func__, pval.intval);
 	if (rc < 0) {
@@ -867,7 +868,7 @@ static int handle_jeita(struct step_chg_info *chip)
 		}
 		pr_info("batt_temp = %d, ffc_chg_term_current=%d\n", batt_temp, chg_term_current);
 		}
-	}
+	}*/
 
 	chip->fv_votable = find_votable("FV");
 	if (!chip->fv_votable)
@@ -918,8 +919,8 @@ static int handle_jeita(struct step_chg_info *chip)
 				return rc;
 			}
 			fast_mode_dis = true;
-		} else if ((temp < BATT_WARM_THRESHOLD - chip->jeita_fv_config->param.hysteresis)
-					&& (temp > BATT_COOL_THRESHOLD + chip->jeita_fv_config->param.hysteresis)
+		} else if ((temp < BATT_WARM_THRESHOLD - (chip->jeita_fv_config->param.hysteresis)*3)
+					&& (temp > BATT_COOL_THRESHOLD + (chip->jeita_fv_config->param.hysteresis)*3)
 						&& fast_mode_dis) {
 			pr_err("temp:%d enable fastcharge mode\n", temp);
 			pval.intval = true;
@@ -964,13 +965,13 @@ set_jeita_fv:
 update_time:
 	chip->jeita_last_update_time = ktime_get();
 
-  	rc = power_supply_get_property(chip->bms_psy,
+	rc = power_supply_get_property(chip->bms_psy,
 			   POWER_SUPPLY_PROP_BATTERY_TYPE, &pval);
 	if (rc < 0) {
 	  pr_err("lct Failed to get batt-type rc=%d\n", rc);
           return rc;
 	}
-	if (strcmp(pval.strval,"m703-pm7150b-atl-5160mah") == 0){
+	if (strcmp(pval.strval,"m305-sunwoda-5000mah") == 0){
           if (ffc_chg_term_no_work && (batt_soc == 100)) {
                   ffc_chg_term_no_work = false;
                   schedule_delayed_work(&chip->ffc_chg_term_current_work,
@@ -985,9 +986,11 @@ update_time:
                           rc = power_supply_set_property(chip->batt_psy,
                           POWER_SUPPLY_PROP_CHARGING_ENABLED, &pval);
                     }
-                    pr_err("lct ffc_chg_term_no_work=%d,short_time_high_temp=%d\n", ffc_chg_term_no_work,short_time_high_temp);
+                   pr_err("lct ffc_chg_term_no_work=%d,short_time_high_temp=%d,batt_soc=%d\n",
+						ffc_chg_term_no_work,short_time_high_temp,batt_soc);
           }
         }
+
 
 	return 0;
 }

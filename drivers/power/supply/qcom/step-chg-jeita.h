@@ -1,4 +1,5 @@
 /* Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,8 +19,8 @@
 #define BATT_COOL_THRESHOLD		150
 #define BATT_WARM_THRESHOLD		480
 #define FFC_CHG_TERM_TEMP_THRESHOLD	350
-#define FFC_LOW_TEMP_CHG_TERM_CURRENT	-710
-#define FFC_HIGH_TEMP_CHG_TERM_CURRENT	-760
+#define FFC_LOW_TEMP_CHG_TERM_CURRENT	-540
+#define FFC_HIGH_TEMP_CHG_TERM_CURRENT	-590
 
 struct step_chg_jeita_param {
 	u32			psy_prop;

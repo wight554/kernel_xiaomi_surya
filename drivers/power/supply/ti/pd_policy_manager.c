@@ -161,6 +161,7 @@ static bool pd_disable_cp_by_jeita_status(struct usbpd_pm *pdpm)
 	}
 
 	batt_temp = pval.intval;
+	pdpm->batt_temp = batt_temp;
 	pr_debug("batt_temp: %d\n", batt_temp);
 	if (bq_input_suspend) {
 		return true;
@@ -881,7 +882,7 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 					charging with switch charger\n",
 					pdpm->cp.vbat_volt);
 			usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_EXIT);
-			if (pm_config.bat_volt_lp_lmt < BAT_VOLT_LOOP_LMT)
+			if ((pm_config.bat_volt_lp_lmt < BAT_VOLT_LOOP_LMT)||(pdpm->batt_temp < (-50)))
 				recover = true;
 		} else if (thermal_level >= MAX_THERMAL_LEVEL
 				|| pdpm->is_temp_out_fc2_range) {
@@ -904,6 +905,10 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 		if (pm_config.fc2_disable_sw) {
 			if (!pdpm->sw.charge_limited) {
 				usbpd_pm_limit_sw(pdpm, true);
+				usbpd_pm_update_sw_status(pdpm);
+			}
+			if (pdpm->sw.charge_enabled) {
+				usbpd_pm_enable_sw(pdpm, false);
 				usbpd_pm_update_sw_status(pdpm);
 			}
 			usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_ENTRY_1);
@@ -969,25 +974,19 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 
 	case PD_PM_STATE_FC2_ENTRY_3:
 
-		if (pm_config.cp_sec_enable && !pdpm->cp_sec.charge_enabled) {
-			usbpd_pm_enable_cp_sec(pdpm, true);
-			msleep(30);
-			usbpd_pm_check_cp_sec_enabled(pdpm);
-		}
-
 		if (!pdpm->cp.charge_enabled) {
 			usbpd_pm_enable_cp(pdpm, true);
 			msleep(30);
 			usbpd_pm_check_cp_enabled(pdpm);
 		}
 
+		if (pm_config.cp_sec_enable && !pdpm->cp_sec.charge_enabled) {
+			usbpd_pm_enable_cp_sec(pdpm, true);
+			msleep(30);
+			usbpd_pm_check_cp_sec_enabled(pdpm);
+		}
+
 		if (pdpm->cp.charge_enabled) {
-			if (pm_config.fc2_disable_sw) {
-				if (pdpm->sw.charge_enabled) {
-					usbpd_pm_enable_sw(pdpm, false);
-					usbpd_pm_update_sw_status(pdpm);
-				}
-			}
 			if ((pm_config.cp_sec_enable && pdpm->cp_sec.charge_enabled)
 					|| !pm_config.cp_sec_enable) {
 				usbpd_pm_move_state(pdpm, PD_PM_STATE_FC2_TUNE);
@@ -1077,7 +1076,8 @@ static int usbpd_pm_sm(struct usbpd_pm *pdpm)
 			usbpd_pm_move_state(pdpm, PD_PM_STATE_ENTRY);
 		//else
 		//	rc = 1;
-		
+		pr_err("longcheer,%s:stop_sw=%d,pdpm->sw.charge_enabled=%d, pdpm->sw.charge_limited=%d\n",__func__,stop_sw,pdpm->sw.charge_enabled,pdpm->sw.charge_limited);
+
 		break;
 	default:
 		usbpd_pm_move_state(pdpm, PD_PM_STATE_ENTRY);
@@ -1108,7 +1108,7 @@ static void usbpd_pm_workfunc(struct work_struct *work)
 
 static void usbpd_pm_disconnect(struct usbpd_pm *pdpm)
 {
-
+	usbpd_pm_enable_cp(pdpm, false);
 	cancel_delayed_work_sync(&pdpm->pm_work);
 
 	if (pdpm->fcc_votable)

@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -22,6 +23,7 @@ struct qg_batt_props {
 	int			vbatt_full_mv;
 	int			fastchg_curr_ma;
 	int			qg_profile_version;
+	int	                oem_profile_version;
 };
 
 struct qg_irq_info {

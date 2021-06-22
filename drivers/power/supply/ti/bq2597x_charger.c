@@ -2,6 +2,7 @@
  * BQ2570x battery charging driver
  *
  * Copyright (C) 2017 Texas Instruments *
+ * Copyright (C) 2021 XiaoMi, Inc.
  * This package is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -54,6 +55,8 @@ enum {
 #define BQ25970_ROLE_STDALONE   0
 #define BQ25970_ROLE_SLAVE	1
 #define BQ25970_ROLE_MASTER	2
+
+#define LCT_DEVICE_ID	0x00
 
 enum {
 	BQ25970_STDALONE,
@@ -228,6 +231,7 @@ struct bq2597x {
 	bool irq_waiting;
 	bool irq_disabled;
 	bool resume_completed;
+	bool is_lct;
 
 	bool batt_present;
 	bool vbus_present;
@@ -1053,6 +1057,17 @@ static int bq2597x_get_adc_data(struct bq2597x *bq, int channel,  int *result)
 	t = val & 0xFF;
 	t <<= 8;
 	t |= (val >> 8) & 0xFF;
+
+	if(bq->is_lct) {
+		if(channel == ADC_IBUS)		t = t * LCT_IBUS_LSB;
+		else if(channel == ADC_VBUS) 	t = t * LCT_VBUS_LSB;
+		else if(channel == ADC_VAC)    	t = t * LCT_VAC_LSB;
+		else if(channel == ADC_VOUT)    t = t * LCT_VOUT_LSB;
+		else if(channel == ADC_VBAT)    t = t * LCT_VBAT_LSB * LCT_VBAT_TRIM;
+		else if(channel == ADC_IBAT)    t = t * LCT_IBAT_LSB;
+		else if(channel == ADC_TDIE)    t = t * LCT_TDIE_LSB;
+	}
+
 	*result = t;
 
 	return 0;
@@ -1360,6 +1375,13 @@ static int bq2597x_detect_device(struct bq2597x *bq)
 	if (ret == 0) {
 		bq->part_no = (data & BQ2597X_DEV_ID_MASK);
 		bq->part_no >>= BQ2597X_DEV_ID_SHIFT;
+		if(data == LCT_DEVICE_ID) {
+			bq->is_lct = true;
+		}
+		else {
+			bq->is_lct = false;
+		}
+
 	}
 
 	return ret;
@@ -1660,6 +1682,13 @@ static int bq2597x_init_adc(struct bq2597x *bq)
 	bq2597x_set_adc_scan(bq, ADC_VAC, true);
 
 	bq2597x_enable_adc(bq, true);
+
+	if(bq->is_lct) {
+		bq2597x_write_byte(bq, BQ2597X_REG_2E, 0x08);
+		bq2597x_update_bits(bq, LCT_REG_34,
+                                 LCT_ADC_TRIM_MASK,
+                                 1);
+	}
 
 	return 0;
 }
@@ -2360,7 +2389,7 @@ static int bq2597x_charger_probe(struct i2c_client *client,
 		return ret;
 
 
-	pr_err("lct client->irq=d%\n",client->irq);
+	pr_err("lct client->irq=%d\n",client->irq);
 
 	ret = bq_charger_int(bq);
 	if (ret < 0) {

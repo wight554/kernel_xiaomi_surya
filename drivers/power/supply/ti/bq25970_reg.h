@@ -788,4 +788,16 @@
 #define BQ2597X_IBUS_LOW_DG_10US			0
 #define BQ2597X_IBUS_LOW_DG_5MS				1
 
+#define LCT_REG_34					0x34
+#define LCT_ADC_TRIM_MASK				0x01
+
+#define LCT_IBUS_LSB					15625/10000
+#define LCT_VBUS_LSB					375/100
+#define LCT_VAC_LSB					5
+#define LCT_VOUT_LSB					125/100
+#define LCT_VBAT_LSB					125/100
+#define LCT_VBAT_TRIM					1006/1000
+#define LCT_IBAT_LSB					3125/1000
+#define LCT_TDIE_LSB					5/10
+
 #endif

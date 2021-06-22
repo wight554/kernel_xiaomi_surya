@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -129,7 +130,7 @@ enum print_reason {
 
 /* lct thermal */
 #define LCT_THERM_CALL_LEVEL		14
-#define LCT_THERM_LCDOFF_LEVEL		11
+#define LCT_THERM_LCDOFF_LEVEL		13
 
 #ifdef CONFIG_BATT_VERIFY_BY_DS28E16
 	#define CHARGER_SOC_DECIMAL_MS		200
@@ -161,7 +162,7 @@ enum hvdcp3_type {
 #define TYPEC_DEFAULT_CURRENT_UA	900000
 #define TYPEC_MEDIUM_CURRENT_UA		1500000
 #define TYPEC_HIGH_CURRENT_UA		3000000
-#define HVDCP3p5_40W_CURRENT_UA                4500000
+#define HVDCP3p5_40W_CURRENT_UA         4500000
 #define DCIN_ICL_MIN_UA			100000
 #define DCIN_ICL_MAX_UA			1500000
 #define DCIN_ICL_STEP_UA		100000
@@ -693,10 +694,10 @@ struct smb_charger {
 	int			usbin_forced_max_uv;
 	int			init_thermal_ua;
 	u32			comp_clamp_level;
-	bool					qc3p5_auth_complete;
-	bool					qc3p5_authenticated;
-	bool					qc3p5_authentication_started;
-	int 					qc3p5_power_limit_w;
+	bool			qc3p5_auth_complete;
+	bool			qc3p5_authenticated;
+	bool			qc3p5_authentication_started;
+	int 			qc3p5_power_limit_w;
 	bool			hvdcp3_standalone_config;
 	int			wls_icl_ua;
 	bool			dpdm_enabled;
@@ -1038,7 +1039,7 @@ int smblib_set_prop_battery_charging_enabled(struct smb_charger *chg,
                 const union power_supply_propval *val);
 #ifdef CONFIG_REVERSE_CHARGE
 void rerun_reverse_check(struct smb_charger *chg);
-extern char *saved_command_line;
+//extern char *saved_command_line;
 #endif
 int smblib_get_prop_batt_awake(struct smb_charger *chg,
 				union power_supply_propval *val);

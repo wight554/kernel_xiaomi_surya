@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -538,6 +539,7 @@ enum {
 #define BITE_WDOG_TIMEOUT_8S			0x3
 #define MIN_WD_BARK_TIME			16
 
+#define MISC_SYSOK_CFG_REG	                (MISC_BASE + 0x94)
 #define AICL_RERUN_TIME_CFG_REG			(MISC_BASE + 0x61)
 #define AICL_RERUN_TIME_12S_VAL			0x01
 

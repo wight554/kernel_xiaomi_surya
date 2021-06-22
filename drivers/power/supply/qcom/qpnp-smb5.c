@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -514,8 +515,8 @@ static int smb5_parse_dt(struct smb5 *chip)
 	chg->pd_not_supported = chg->pd_not_supported ||
 			of_property_read_bool(node, "qcom,usb-pd-disable");
 
-	chg->lpd_disabled = of_property_read_bool(node, "qcom,lpd-disable");
-
+	chg->lpd_disabled = chg->lpd_disabled ||
+			of_property_read_bool(node, "qcom,lpd-disable");
 
 	chg->support_ffc = of_property_read_bool(node,
 				"mi,support-ffc");
@@ -556,9 +557,9 @@ static int smb5_parse_dt(struct smb5 *chip)
 	if (rc < 0)
 		chg->otg_cl_ua =
 			(chip->chg.chg_param.smb_version == PMI632_SUBTYPE)
-						? MICRO_1PA : MICRO_2PA;
+						? MICRO_1PA : MICRO_1P5A;
 
-	#ifdef CONFIG_REVERSE_CHARGE
+	#if 0 //def CONFIG_REVERSE_CHARGE
 	if ((strnstr(saved_command_line, "androidboot.hwc=INT", strlen(saved_command_line)) != NULL)
 		|| (strnstr(saved_command_line, "androidboot.hwc=THAI", strlen(saved_command_line)) != NULL))
 		chg->otg_cl_ua = MICRO_1PA;
@@ -1784,8 +1785,6 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_FULL,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_FORCE_RECHARGE,
-	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
-	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE,
 	POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_CHARGING_ENABLED,
@@ -1794,6 +1793,8 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_REVERSE_CHARGE_MODE,
 #endif
 	POWER_SUPPLY_PROP_CHARGE_AWAKE_STATE,
+	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
+
 };
 
 #define DEBUG_ACCESSORY_TEMP_DECIDEGC	250
@@ -1931,19 +1932,10 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
 		rc = smblib_get_prop_from_bms(chg,
 				POWER_SUPPLY_PROP_BATTERY_TYPE,val);
-		if (strcmp(val->strval,"m703-atl-6000mah") == 0){
-			val->intval = 6000;
-		}
-		else if(strcmp(val->strval,"m703-pm7150b-atl-5160mah") == 0){
-			val->intval = 5160;
-		}
+		val->intval = 5000 * 1000;
 		break;
 	case POWER_SUPPLY_PROP_FORCE_RECHARGE:
 		val->intval = 0;
-		break;
-	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
-		rc = smblib_get_prop_from_bms(chg,
-				POWER_SUPPLY_PROP_TIME_TO_FULL_NOW, val);
 		break;
 	case POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE:
 		val->intval = chg->fcc_stepper_enable;
@@ -1970,6 +1962,10 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 #endif
 	case POWER_SUPPLY_PROP_CHARGE_AWAKE_STATE:
 		rc = smblib_get_prop_batt_awake(chg, val);
+		break;
+	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
+		rc = smblib_get_prop_from_bms(chg,
+				POWER_SUPPLY_PROP_TIME_TO_FULL_NOW, val);
 		break;
 	default:
 		pr_err("batt power supply prop %d not supported\n", psp);
@@ -3041,6 +3037,12 @@ static int smb5_init_hw(struct smb5 *chip)
 		return rc;
 	}
 
+	rc = smblib_write(chg, MISC_SYSOK_CFG_REG,0x11);
+	if (rc < 0) {
+		dev_err(chg->dev, "Couldn't configure SYSOK rc=%d\n", rc);
+	    return rc;
+	}
+
 	rc = smblib_write(chg, AICL_RERUN_TIME_CFG_REG,
 				AICL_RERUN_TIME_12S_VAL);
 	if (rc < 0) {
@@ -4075,12 +4077,12 @@ static int smb5_probe(struct platform_device *pdev)
 	chg->connector_health = -EINVAL;
 	chg->otg_present = false;
 	chg->main_fcc_max = -EINVAL;
+	mutex_init(&chg->adc_lock);
 #ifdef CONFIG_REVERSE_CHARGE
 	chg->reverse_charge_mode = false;
 	chg->reverse_charge_state = false;
 	chg->otg_chg_current = MICRO_2PA;
 #endif
-	mutex_init(&chg->adc_lock);
 
 	chg->regmap = dev_get_regmap(chg->dev->parent, NULL);
 	if (!chg->regmap) {
